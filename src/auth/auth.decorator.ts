@@ -1,4 +1,5 @@
 import { ValidateBy, ValidationOptions, buildMessage } from 'class-validator';
+import { SetMetadata } from '@nestjs/common';
 
 export const MIN_DATE = 'minDate';
 
@@ -29,3 +30,6 @@ export function IsAdult(date: Date, validationOptions?: ValidationOptions): Prop
     validationOptions,
   );
 }
+
+export const IS_PUBLIC_KEY = 'isPublic';
+export const SkipAuth = () => SetMetadata(IS_PUBLIC_KEY, true);

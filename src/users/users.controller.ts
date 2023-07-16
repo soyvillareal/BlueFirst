@@ -9,13 +9,10 @@ import {
   Patch,
   Query,
   UploadedFile,
-  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags, getSchemaPath } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
-
-import { AuthGuard } from 'src/auth/auth.guard';
 
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -25,7 +22,6 @@ import { UserPaginationDto } from './dto/user-pagination.dto';
 import { ApiPaginatedResponse } from './users.decorator';
 
 @ApiBearerAuth()
-@UseGuards(AuthGuard)
 @ApiTags('users')
 @Controller('users')
 export class UsersController {

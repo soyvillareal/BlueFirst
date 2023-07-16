@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { UsersService } from 'src/users/users.service';
 import env from 'src/common/env';
 import { DEFAULT_AVATAR } from 'src/common/constants';
+import { AwsService } from 'src/aws/aws.service';
 
 import { RegisterAuthDto } from './dto/register-auth.dto';
 import { UsersEntity } from './entities/users.entity';
@@ -23,6 +24,7 @@ export class AuthService {
     @InjectRepository(SessionsEntity) private sessionsService: Repository<SessionsEntity>,
     private readonly usersService: UsersService,
     private jwtAuthService: JwtService,
+    private readonly awsService: AwsService,
   ) {}
 
   async register(registerAuthDto: RegisterAuthDto, file?: Express.Multer.File) {
@@ -40,7 +42,7 @@ export class AuthService {
     let avatar = DEFAULT_AVATAR;
 
     if (file) {
-      const avatarUploaded = await this.usersService.S3Upload(
+      const avatarUploaded = await this.awsService.S3Upload(
         file.buffer,
         env.AWS_S3_BUCKET_UPLOADS,
         `${username}-${new Date().getTime()}.${file.mimetype.split('/')[1]}`,

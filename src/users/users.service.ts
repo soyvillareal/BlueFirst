@@ -1,13 +1,12 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOneOptions, Repository } from 'typeorm';
-import AWS from 'aws-sdk';
-import { BucketName } from 'aws-sdk/clients/elastictranscoder';
 
-import { IFindUserByEmailOrUsername, IS3UpdateOptions, IUserResponse } from 'src/users/users.interface';
+import { IFindUserByEmailOrUsername, IUserResponse } from 'src/users/users.interface';
 import { UsersEntity } from 'src/auth/entities/users.entity';
 import env from 'src/common/env';
 import { DEFAULT_AVATAR } from 'src/common/constants';
+import { AwsService } from 'src/aws/aws.service';
 
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PageOptionsDto } from './dto/page-options.dto';
@@ -17,14 +16,10 @@ import { UserPaginationDto } from './dto/user-pagination.dto';
 
 @Injectable()
 export class UsersService {
-  private s3: AWS.S3;
-
-  constructor(@InjectRepository(UsersEntity) private usersService: Repository<UsersEntity>) {
-    this.s3 = new AWS.S3({
-      accessKeyId: env.AWS_ACCESS_KEY_ID,
-      secretAccessKey: env.AWS_SECRET_ACCESS_KEY,
-    });
-  }
+  constructor(
+    @InjectRepository(UsersEntity) private usersService: Repository<UsersEntity>,
+    private readonly awsService: AwsService,
+  ) {}
 
   async findAll(pageOptionsDto: PageOptionsDto): Promise<PageDto<UserPaginationDto>> {
     const queryBuilder = this.usersService.createQueryBuilder('user');
@@ -77,7 +72,12 @@ export class UsersService {
 
   async update(id: string, updateUserDto: UpdateUserDto, file?: Express.Multer.File): Promise<IUserResponse | HttpException> {
     const { firstName, lastName, username, email, password, birthdate, gender } = updateUserDto;
+
     const userFound = await this.findUserById(id, ['avatar', 'username', 'email']);
+
+    if (!userFound) {
+      throw new HttpException('USER_NOT_FOUND', HttpStatus.NOT_FOUND);
+    }
 
     if (userFound.username !== username) {
       const usernameExists = await this.usersService.count({
@@ -99,14 +99,10 @@ export class UsersService {
       }
     }
 
-    if (!userFound) {
-      throw new HttpException('USER_NOT_FOUND', HttpStatus.NOT_FOUND);
-    }
-
     let avatar = DEFAULT_AVATAR;
 
     if (file) {
-      const avatarUploaded = await this.S3Update(env.AWS_S3_BUCKET_UPLOADS, {
+      const avatarUploaded = await this.awsService.S3Update(env.AWS_S3_BUCKET_UPLOADS, {
         newFilename: `${username}-${new Date().getTime()}.${file.mimetype.split('/')[1]}`,
         oldFilename: userFound.avatar,
         buffer: file.buffer,
@@ -129,9 +125,9 @@ export class UsersService {
       gender,
     };
 
-    console.log(data);
+    const toSaveUser = this.usersService.create(data);
 
-    const userSaved = await this.usersService.save(data);
+    const userSaved = await this.usersService.save(toSaveUser);
 
     delete userSaved.password;
 
@@ -145,7 +141,7 @@ export class UsersService {
       throw new HttpException('USER_NOT_FOUND', HttpStatus.NOT_FOUND);
     }
 
-    await this.S3Delete(env.AWS_S3_BUCKET_UPLOADS, userFound.avatar);
+    await this.awsService.S3Delete(env.AWS_S3_BUCKET_UPLOADS, userFound.avatar);
 
     await this.usersService.delete({ id });
   }
@@ -167,52 +163,5 @@ export class UsersService {
     return this.usersService.count({
       where: { id },
     });
-  }
-
-  async S3Upload(buffer: Buffer, bucket: BucketName, name: string, mimetype: string) {
-    const params = {
-      Bucket: bucket,
-      Key: String(name),
-      Body: buffer,
-      ACL: 'public-read',
-      ContentType: mimetype,
-      ContentDisposition: 'inline',
-      CreateBucketConfiguration: {
-        LocationConstraint: env.AWS_S3_REGION,
-      },
-    };
-
-    try {
-      return this.s3.upload(params).promise();
-    } catch (e) {
-      throw new HttpException('INTERNAL_SERVER_ERROR', HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  async S3Delete(bucket: BucketName, name: string) {
-    const params = {
-      Bucket: bucket,
-      Key: String(name),
-    };
-
-    if (name === DEFAULT_AVATAR) return;
-
-    try {
-      return this.s3.deleteObject(params).promise();
-    } catch (e) {
-      throw new HttpException('INTERNAL_SERVER_ERROR', HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  async S3Update(bucket: BucketName, { newFilename, oldFilename, buffer, mime }: IS3UpdateOptions) {
-    const uploadedAvatar = await this.S3Upload(buffer, bucket, newFilename, mime);
-
-    if (!uploadedAvatar) {
-      throw new HttpException('INTERNAL_SERVER_ERROR', HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
-    await this.S3Delete(bucket, oldFilename);
-
-    return uploadedAvatar.Key.split('/')[1];
   }
 }
