@@ -1,0 +1,17 @@
+export default {
+  IS_OFFLINE: process.env.IS_OFFLINE ? Boolean(process.env.IS_OFFLINE) : false,
+  NODE_ENV: process.env.NODE_ENV || 'local',
+  ORIGIN: process.env.ORIGIN || '*',
+  JWT_SECRET: process.env.JWT_SECRET || 'secret',
+  JWT_EXPIRATION_TIME: process.env.JWT_EXPIRATION_TIME || '3600',
+  AWS_S3_BUCKET: process.env.AWS_S3_BUCKET || 'demo-bluefirst',
+  AWS_S3_BUCKET_UPLOADS: `${process.env.AWS_S3_BUCKET || 'demo-bluefirst'}/uploads`,
+  AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID || '',
+  AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY || '',
+  AWS_S3_REGION: process.env.AWS_S3_REGION || 'us-east-1',
+  DATABASE_HOST: process.env.DATABASE_HOST || 'localhost',
+  DATABASE_PORT: process.env.DATABASE_PORT || '3306',
+  DATABASE_USER: process.env.DATABASE_USER || 'root',
+  DATABASE_PASSWORD: process.env.DATABASE_PASSWORD || 'root',
+  DATABASE_NAME: process.env.DATABASE_NAME || 'nestjs',
+};
