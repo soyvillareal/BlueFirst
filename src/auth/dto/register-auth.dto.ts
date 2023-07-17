@@ -38,15 +38,15 @@ export class RegisterAuthDto {
   @IsNotEmpty()
   @MinLength(8)
   @MaxLength(30)
-  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/, {
+  @Matches(/^(?=\w*\d)(?=\w*[A-Z])(?=\w*[a-z])\S{8,30}$/, {
     message: 'password must contain at least 1 uppercase letter, 1 lowercase letter and 1 number',
   })
   password: string;
 
   @ApiPropertyOptional({ required: true, nullable: true })
-  @IsOptional()
   @Type(() => Date)
   @IsAdult(new Date(new Date().getTime() - 1000 * 60 * 60 * 24 * 365 * 18)) // Min 18 years old
+  @IsOptional()
   birthdate: Date;
 
   @ApiProperty({ required: true, enum: EUserGender })

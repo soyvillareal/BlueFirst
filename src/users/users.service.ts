@@ -102,7 +102,7 @@ export class UsersService {
     let avatar = DEFAULT_AVATAR;
 
     if (file) {
-      const avatarUploaded = await this.awsService.S3Update(env.AWS_S3_BUCKET_UPLOADS, {
+      const avatarUploaded = await this.awsService.S3Update(env.CLOUD_S3_BUCKET_UPLOADS, {
         newFilename: `${username}-${new Date().getTime()}.${file.mimetype.split('/')[1]}`,
         oldFilename: userFound.avatar,
         buffer: file.buffer,
@@ -141,7 +141,7 @@ export class UsersService {
       throw new HttpException('USER_NOT_FOUND', HttpStatus.NOT_FOUND);
     }
 
-    await this.awsService.S3Delete(env.AWS_S3_BUCKET_UPLOADS, userFound.avatar);
+    await this.awsService.S3Delete(env.CLOUD_S3_BUCKET_UPLOADS, userFound.avatar);
 
     await this.usersService.delete({ id });
   }

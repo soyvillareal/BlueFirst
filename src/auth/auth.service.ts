@@ -30,6 +30,11 @@ export class AuthService {
   async register(registerAuthDto: RegisterAuthDto, file?: Express.Multer.File) {
     const { email, username, password, firstName, lastName, birthdate, gender } = registerAuthDto;
 
+    console.log('-----------------------------');
+    console.log(file);
+    console.log(registerAuthDto);
+    console.log('-----------------------------');
+
     const userFound = await this.usersService.findOneByEmailOrUsername({
       email,
       username,
@@ -44,7 +49,7 @@ export class AuthService {
     if (file) {
       const avatarUploaded = await this.awsService.S3Upload(
         file.buffer,
-        env.AWS_S3_BUCKET_UPLOADS,
+        env.CLOUD_S3_BUCKET_UPLOADS,
         `${username}-${new Date().getTime()}.${file.mimetype.split('/')[1]}`,
         file.mimetype,
       );

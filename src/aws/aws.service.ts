@@ -12,8 +12,8 @@ export class AwsService {
 
   constructor() {
     this.s3 = new AWS.S3({
-      accessKeyId: env.AWS_ACCESS_KEY_ID,
-      secretAccessKey: env.AWS_SECRET_ACCESS_KEY,
+      accessKeyId: env.CLOUD_ACCESS_KEY_ID,
+      secretAccessKey: env.CLOUD_SECRET_ACCESS_KEY,
     });
   }
 
@@ -26,7 +26,7 @@ export class AwsService {
       ContentType: mimetype,
       ContentDisposition: 'inline',
       CreateBucketConfiguration: {
-        LocationConstraint: env.AWS_S3_REGION,
+        LocationConstraint: env.CLOUD_S3_REGION,
       },
     };
 

@@ -8,7 +8,7 @@ export const MIN_DATE = 'minDate';
  */
 export function isAdult(date: unknown, minDate: Date): boolean {
   const dateObject: Date = typeof date === 'string' ? new Date(date) : <Date>date;
-  return dateObject instanceof Date && dateObject.getTime() < minDate.getTime();
+  return (dateObject instanceof Date && dateObject.getTime() < minDate.getTime()) || isNaN(dateObject.getTime());
 }
 
 /**
